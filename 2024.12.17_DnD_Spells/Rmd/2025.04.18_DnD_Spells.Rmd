@@ -1,0 +1,858 @@
+---
+title: "D&D 5th Edition (2024) Spells"
+author: Rachel K. Meade, Ph.D.
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  html_document:
+    code_folding: show
+    collapsed: no
+    toc: yes
+    toc_float: yes
+---
+
+## Introduction
+
+**Purpose:** To understand the landscape of spells in the 2024 Dungeons & Dragons (D&D) 5th edition update to inform my next character's class! 
+
+Data for this analysis is sourced from the R community's Tidy Tuesday post on December 17, 2024. 
+
+The spells data was curated by Jon Harmon and is available [here](https://github.com/rfordatascience/tidytuesday/tree/main/data/2024/2024-12-17).
+
+## Preparing Environment
+
+```{css style, echo = FALSE}
+.main-container {
+  max-width: 80% !important;
+  margin: auto;
+}
+
+/* TOC */
+#TOC {
+  background-color: #f9f1dc;
+  border: 1px solid #8b0000;   
+  padding: 1em;
+  font-family: 'Georgia', serif;
+  border-radius: 6px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+}
+
+/* TOC headers */
+#TOC .tocify-header {
+  font-weight: bold;
+  color: #8b0000;             
+  margin-top: 0.75em;
+}
+
+/* TOC links */
+#TOC .tocify-item {
+  color: #3b2f23;           
+  font-size: 0.95em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+/* TOC link on hover */
+#TOC .tocify-item:hover {
+  background-color: #e8dcb9;   
+  color: #8b0000;
+}
+
+/* TOC current section */
+#TOC .tocify-item.active {
+  background-color: #8b0000;  
+  color: #fdf5e6 !important;   
+  font-weight: bold;
+}
+
+/* Match TOC section titles to tab styling */
+#TOC .tocify-header:hover {
+  color: #a00000;
+  text-decoration: underline;
+}
+
+/* Base Page */ 
+body { 
+  background-color: #f9f1dc; 
+  font-family: 'Georgia', 'Garamond', serif; 
+  color: #3b2f23; 
+  line-height: 1.7;
+  padding: 20px; } 
+
+/* Headers */ 
+h1, h2 { 
+  font-family: 'Cinzel', 'Georgia', serif; 
+  color: #8b0000; 
+  border-bottom: 2px solid #8b0000; 
+  padding-bottom: 5px; 
+  margin-top: 2em; } 
+
+h3, h4 { 
+  font-family: 'Cinzel', 'Georgia', serif; 
+  color: #8b0000;} 
+
+/* Code chunks */ 
+pre, code { 
+  background-color: #e8ded1; 
+  color: #4b3b2a; 
+  border-radius: 4px; 
+  padding: 4px; 
+  font-family: 'Courier New', monospace; } 
+
+/* Tables */ 
+table { 
+  border-collapse: collapse; 
+  width: 100%; 
+  background-color: #fffdf6; 
+  border: 2px solid #c0a97c; } 
+  
+th, td {
+  border: 1px solid #cbb89b; 
+  padding: 8px; 
+  text-align: left; } 
+  
+th { 
+  background-color: #dfd3b6; 
+  color: #3b2f23; } 
+
+/* Table Styling */
+table {
+  font-family: 'Georgia', serif;
+  background-color: #f9f1dc; 
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  border: 1px solid #8b0000; 
+}
+
+/* Header Row */
+table.kable thead th,
+.table thead th {
+  background-color: #8b0000 !important;  
+  color: #fdf5e6 !important;             
+  font-weight: bold;
+  text-align: center;
+  border: 1px solid #3b2f23;
+}
+
+/* Body Rows */
+tbody td {
+  border: 1px solid #cbb89b;
+  padding: 8px;
+  color: #3b2f23;
+  text-align: left;
+  background-color: #fff9f0; 
+}
+
+/* Alternating row shading */
+tbody tr:nth-child(even) td {
+  background-color: #f0e6ce;
+}
+
+
+/* kableExtra wrappers */
+.kable_wrapper {
+  margin: 1em 0;
+}
+
+/* Hover effect for rows */
+table tbody tr:hover td {
+  background-color: #e8dcb9;
+}
+
+/* Plots */ 
+img { 
+  display: block; 
+  margin: 20px auto; 
+  border: 4px double #8b0000; 
+  padding: 4px; 
+  background-color: #fff9f0; }
+
+/* Tabset Pills */
+.nav-pills > li > a {
+  background-color: #f9f1dc;     
+  color: #3b2f23;                
+  border: 1px solid #8b0000;     
+  font-family: 'Cinzel', 'Georgia', serif;
+  margin-right: 5px;
+}
+
+.nav-pills > li.active > a,
+.nav-pills > li.active > a:focus,
+.nav-pills > li.active > a:hover {
+  background-color: #8b0000;    
+  color: #fff9f0;           
+  border-color: #3b2f23;
+}
+
+.nav-pills > li > a:hover {
+  background-color: #dfd3b6;     
+  color: #3b2f23;
+}
+
+/* Hyperlinks */
+a {
+  color: #8b0000;   
+  text-decoration: none;  
+}
+
+a:hover {
+  color: #d62828;   
+  text-decoration: underline; 
+}
+
+a:focus {
+  color: #d62828;   
+  outline: none;    
+}
+```
+
+
+Loading packages for source data and visualization.
+```{r pkgs, message = FALSE, warning = FALSE}
+# install.packages("tidytuesdayR")
+# if (!require(devtools)) install.packages("devtools")
+# devtools::install_github("gaospecial/ggVennDiagram")
+
+library(tidytuesdayR)
+library(tidyverse)
+library(kableExtra)
+library(ggVennDiagram)
+library(cowplot)
+library(Hmisc)
+```
+
+
+Loading `spells` data into the environment using the `{tidytusesdayR}` package.
+
+*Note:* To avoid overwhelming the API rate limit, I am using a saved CSV, but the code for downloading using the `{tidytusesdayR}` package is commented here.
+```{r data, message = FALSE, warning = FALSE}
+# tuesdata <- tidytuesdayR::tt_load('2024-12-17')
+## OR
+# tuesdata <- tidytuesdayR::tt_load(2024, week = 51)
+# spells <- as.data.frame(tuesdata$spells)
+# write.csv(spells, "../data/spells.csv")
+
+spells <- read.csv("../data/spells.csv", row.names = "X")
+```
+
+
+Define plot theme elements.
+```{r theme}
+plot_theme <- theme_classic() + 
+              theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+                                axis.title = element_text(face = "bold"),
+                                legend.title = element_text(face = "bold"))
+
+pie_theme <- theme_void() + 
+             theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+                                legend.title = element_text(face = "bold"))
+```
+
+
+## Source Data
+
+In the source data, each row represents a spell. 
+
+Column variables included for each spell describe which classes can cast it, what level (or how advanced) the spell is, how the spell can be cast (e.g., what materials are required, how to perform the spell), and what the effects of the spell are (e.g., what is impacted, how long it lasts, etc.).
+
+For tidiness, I am excluding a column containing the full-text summary of the spell and the in-game rules for casting it.
+
+```{r kable, message = FALSE, warning = FALSE}
+spells[, -27] %>%
+  kbl("html", escape = FALSE) %>%
+  kable_styling(full_width = FALSE, 
+                bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>% 
+  scroll_box(height = "300px", width = "100%")
+```
+
+*Note:* Level 0 spells are called "cantrips" in the analysis below. Unlike all other spells, these spells can be cast at any time and (for this reason) have generally weaker effects.
+
+
+## Data Exploration
+
+First, I want to explore the distribution of the spells by level and school (general spell type). 
+
+**When are the most new spells available, and what types are they?**
+```{r spell_lvl_school, message = FALSE, warning = FALSE}
+spells %>% 
+  mutate(school = Hmisc::capitalize(school)) %>% 
+  ggplot(aes(x = level, fill = school, group = school)) + 
+    geom_histogram(bins = 10, binwidth = 1) + 
+    coord_cartesian(xlim = c(-0.5, 9.5)) +
+    scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+    xlab("Spell Level") + 
+    ylab("Count") + 
+    labs(title = "Number of Spells by Level and School", fill = "School") + 
+    plot_theme
+```
+
+From this we can see that 1st and 2nd level spells are the most common among new spells. 
+
+This makes sense because people creating their characters will draw from this large initial pool of spells to start.
+
+Players having more spell options at the start of a campaign allows folks to flavor their characters by what kind of spells they can cast, facilitating variation even between characters of similar classes.
+
+**How are new spells distributed across character classes at each level?**
+```{r spell_lvl_school_byclass}
+spells %>% 
+  gather(class, can_cast, c(-name:-school, -casting_time:-description)) %>% 
+  filter(can_cast == TRUE) %>% 
+  mutate(class = factor(Hmisc::capitalize(class), 
+                        levels = c(rev(Hmisc::capitalize(colnames(spells)[4:11]))))) %>% 
+  mutate(level = factor(as.character(level), levels = c(as.character(0:9)))) %>% 
+  group_by(level, class) %>% 
+  count() %>% 
+  ggplot(aes(x = level, y = class, fill = n)) + 
+    geom_tile() +
+    scale_fill_gradient2(low = "#f9f1dc", 
+                        high = "#8b0000") + 
+    scale_x_discrete(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+    scale_y_discrete(breaks = Hmisc::capitalize(colnames(spells)[4:11])) +
+    xlab("Spell Level") + 
+    ylab("Class") + 
+    labs(title = "Number of Spells by Level and Class", fill = "Number of Spells") + 
+    plot_theme
+```
+
+
+**Click on tabs below to see available data sub-sectioned by class!**
+
+The left plot reports total available spells at each level, and the right plot reports the proportion of spells at that level by school (general spell type). 
+
+Characters gain access to higher level spells as they advance through the campaign, but some spells are only accessible to certain classes.
+
+#### {.tabset .tabset-fade .tabset-pills .unnumbered .no-toc}
+
+```{r spell_lvl_school_byclass_tabs, results = 'asis', fig.width = 10, fig.height = 4, message = FALSE, warning = FALSE}
+for (i in 4:11) {
+  
+  cat("##### ", Hmisc::capitalize(colnames(spells)[i]), "\n")
+  
+  p1 <- 
+    spells %>% 
+      filter(spells[[i]] == TRUE) %>% 
+      mutate(school = Hmisc::capitalize(school)) %>% 
+      ggplot(aes(x = level, fill = school, group = school)) + 
+        geom_histogram(bins = 10, binwidth = 1) + 
+        scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+        coord_cartesian(xlim = c(-0.5, 9.5), ylim = c(0,32)) +
+        xlab("Spell Level") + 
+        ylab("Count") + 
+        guides(fill = "none") + 
+        plot_theme
+  
+  p2 <- 
+    spells %>% 
+      filter(spells[[i]] == TRUE) %>% 
+      mutate(school = Hmisc::capitalize(school)) %>% 
+      ggplot(aes(x = level, y = , fill = school, group = school)) + 
+        stat_count(aes(y = (..count..)/sum(..count..)), geom="bar", position="fill") +
+        scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+        scale_y_continuous(labels = scales::percent_format()) + 
+        coord_cartesian(xlim = c(-0.5, 9.5), ylim = c(0,1)) +
+        xlab("Spell Level") + 
+        ylab("Proportion") + 
+        guides(fill = "none") + 
+        plot_theme
+  
+  pL <- 
+    spells %>% 
+      filter(spells[[i]] == TRUE) %>% 
+      mutate(school = Hmisc::capitalize(school)) %>% 
+      ggplot(aes(x = level, y = , fill = school, group = school)) + 
+        stat_count(aes(y = (..count..)/sum(..count..)), geom="bar", position="fill") +
+        scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+        scale_y_continuous(labels = scales::percent_format()) + 
+        coord_cartesian(xlim = c(-0.5, 9.5), ylim = c(0,1)) +
+        xlab("Spell Level") + 
+        ylab("Proportion") + 
+        labs(fill = "School") + 
+        plot_theme
+  
+  l <- cowplot::get_legend(pL)
+  
+  print(cowplot::plot_grid(p1, p2, l, nrow = 1, rel_widths = c(1, 1, 0.4)))
+  
+  cat("\n\n")
+
+}
+```
+
+#### {.unnumbered .no-toc}
+
+Here, we can tell that **Paladins** and **Rangers**, which are not generally considered to be spell-casters, do not have access to many spells in general and have no access to advanced spells (level 6 or higher).
+
+Among the classes that are commonly considered to be spell-casters, **Wizards** naturally have the largest pool of spells to draw from at all levels. Moreover, they seem to have access to spells of nearly all schools at all levels.
+
+When analyzing these data, I was shocked to find that **Warlocks** had a lower number of spells available to them than **Bards** and **Clerics**, who intuitively seem like they would have less. 
+
+This might be explainable by the fact that **Warlocks** could have a limited number of stronger spells available to them or rely more on non-spell abilities, such as those derived from their all-powerful Patron (a central feature of the **Warlock** class).
+
+**How much overlap is there between spells available to each class?**
+```{r venn, message = FALSE, warning = FALSE}
+x <- list(
+    "Bard" = spells$name[spells$bard == T],
+    "Cleric" = spells$name[spells$cleric == T],
+    "Druid" = spells$name[spells$druid == T],
+    "Paladin" = spells$name[spells$paladin == T],
+    "Ranger" = spells$name[spells$ranger == T],
+    "Sorcerer" = spells$name[spells$sorcerer == T],
+    "Warlock" = spells$name[spells$warlock == T],
+    "Wizard" = spells$name[spells$wizard == T]
+)
+
+ggVennDiagram::ggVennDiagram(x, label_alpha = 0)
+```
+
+One really interesting result from this comparison is that although **Wizards** are the class with access to the greatest number of total spells (nearly 200 total), **Clerics** have access to the largest set of spells unique to a single class (21). 
+
+I want to compare spells that are accessible to **Wizards** to those accessible to **Clerics** to see if we can learn more about how they can use their abilities.
+
+## Clerics vs. Wizards
+
+
+### Action Economy: What can they do?
+
+In one round of combat in D&D, you can generally take one action and one bonus action. If attacked, reactions allow you to clap back at your opponent and get some damage in between turns. 
+
+Having access to both actions and bonus actions can increase your capacity to do damage or help your allies during a round of combat, assuming you roll well enough to actually cast your spell. 
+
+Here, I compare the types of spells available to **Clerics** and **Wizards** by proportion of the total spells available to them to see if one class has a more flexible repertoire of spell mechanics than the other.
+
+*Notes:* Some spells can be used either as an action or a bonus action. In this analysis, they are counted toward both groups, leading to pie charts that sum to more than 100%. Ritual spells or spells without a mechanic designation are excluded from this analysis, as they are generally used outside of battle.
+
+```{r action_pie, fig.width = 10, fig.height = 4, message = FALSE, warning = FALSE}
+action_pie <-
+  spells %>%
+    filter(action == T | bonus_action == T | reaction == T) %>% 
+    count("Action" = sum(action), 
+          "Bonus Action" = sum(bonus_action), 
+          "Reaction" = sum(reaction)) %>% 
+    dplyr::summarize("Action" = (Action/n) * 100,
+                     "Bonus Action" = (`Bonus Action`/n) * 100,
+                     "Reaction" = (Reaction/n) * 100) %>%
+    gather(`Spell Mechanic`, Proportion) %>% 
+    mutate(Proportion = round(Proportion)) %>% 
+    arrange(desc(`Spell Mechanic`)) %>%
+    mutate(ymax = cumsum(Proportion),
+           ymin = c(0, head(ymax, n = -1)),
+           label_position = (ymax + ymin) / 2,
+           label = paste0(Proportion, "%")) %>% 
+    ggplot(aes(ymax = ymax, ymin = ymin, xmax = 1, xmin = 0, fill = `Spell Mechanic`)) +
+      geom_rect() +
+      geom_text(aes(x = 1.2, y = label_position, label = label), size = 3.5) +
+      coord_polar(theta = "y") +
+      xlim(c(-0.5, 1.5)) +  
+      labs(title = "All Spells") +
+      guides(fill = "none") +
+      pie_theme
+
+cleric_pie <-
+  spells %>%
+    filter(action == T | bonus_action == T | reaction == T) %>% 
+    filter(cleric == T) %>% 
+    count("Action" = sum(action), 
+          "Bonus Action" = sum(bonus_action), 
+          "Reaction" = sum(reaction)) %>% 
+    dplyr::summarize("Action" = (Action/n) * 100,
+                     "Bonus Action" = (`Bonus Action`/n) * 100,
+                     "Reaction" = (Reaction/n) * 100) %>%
+    gather(`Spell Mechanic`, Proportion) %>% 
+    mutate(Proportion = round(Proportion)) %>% 
+    arrange(desc(`Spell Mechanic`)) %>%
+    mutate(ymax = cumsum(Proportion),
+           ymin = c(0, head(ymax, n = -1)),
+           label_position = (ymax + ymin) / 2,
+           label = paste0(Proportion, "%")) %>% 
+    ggplot(aes(ymax = ymax, ymin = ymin, xmax = 1, xmin = 0, fill = `Spell Mechanic`)) +
+      geom_rect() +
+      geom_text(aes(x = 1.2, y = label_position, label = label), size = 3.5) +
+      coord_polar(theta = "y") +
+      xlim(c(-0.5, 1.5)) +  
+      labs(title = "Cleric Only") +
+      guides(fill = "none") +
+      pie_theme
+
+wizard_pie <- 
+  spells %>%
+    filter(action == T | bonus_action == T | reaction == T) %>% 
+    filter(wizard == T) %>% 
+    count("Action" = sum(action), 
+          "Bonus Action" = sum(bonus_action), 
+          "Reaction" = sum(reaction)) %>% 
+    dplyr::summarize("Action" = (Action/n) * 100,
+                     "Bonus Action" = (`Bonus Action`/n) * 100,
+                     "Reaction" = (Reaction/n) * 100) %>%
+    gather(`Spell Mechanic`, Proportion) %>% 
+    mutate(Proportion = round(Proportion)) %>% 
+    arrange(desc(`Spell Mechanic`)) %>%
+    mutate(ymax = cumsum(Proportion),
+           ymin = c(0, head(ymax, n = -1)),
+           label_position = (ymax + ymin) / 2,
+           label = paste0(Proportion, "%")) %>% 
+    ggplot(aes(ymax = ymax, ymin = ymin, xmax = 1, xmin = 0, fill = `Spell Mechanic`)) +
+      geom_rect() +
+      geom_text(aes(x = 1.2, y = label_position, label = label), size = 3.5) +
+      coord_polar(theta = "y") +
+      xlim(c(-0.5, 1.5)) +  
+      labs(title = "Wizard Only") +
+      guides(fill = "none") +
+      pie_theme
+
+pieL <- 
+    spells %>%
+    filter(action == T | bonus_action == T | reaction == T) %>% 
+    filter(wizard == T) %>% 
+    count("Action" = sum(action), 
+          "Bonus Action" = sum(bonus_action), 
+          "Reaction" = sum(reaction)) %>% 
+    dplyr::summarize("Action" = (Action/n) * 100,
+                     "Bonus Action" = (`Bonus Action`/n) * 100,
+                     "Reaction" = (Reaction/n) * 100) %>%
+    gather(`Spell Mechanic`, Proportion) %>% 
+    mutate(Proportion = round(Proportion)) %>% 
+    arrange(desc(`Spell Mechanic`)) %>%
+    mutate(ymax = cumsum(Proportion),
+           ymin = c(0, head(ymax, n = -1)),
+           label_position = (ymax + ymin) / 2,
+           label = paste0(Proportion, "%")) %>% 
+    ggplot(aes(ymax = ymax, ymin = ymin, xmax = 1, xmin = 0, fill = `Spell Mechanic`)) +
+      geom_rect() +
+      geom_text(aes(x = 1.2, y = label_position, label = label), size = 3.5) +
+      coord_polar(theta = "y") +
+      xlim(c(-0.5, 1.5)) + 
+      labs(title = "Wizard") +
+      pie_theme
+  
+l <- cowplot::get_legend(pieL)
+  
+print(cowplot::plot_grid(action_pie, cleric_pie, wizard_pie, l, 
+                         nrow = 1, rel_widths = c(1, 1, 1, 0.4)))
+```
+
+
+Overall, **Clerics** have no spell reactions available to them, while **Wizards** have a matched proportion of reactions to the total set of spells. 
+
+In contrast, **Clerics** have a substantially higher proportion of bonus action spells available to them than **Wizards**. 
+
+**Are there meaningful differences in class action economy depending upon spell level?**
+
+```{r action_lines_bylevel, fig.width = 10, fig.height = 4, message = FALSE, warning = FALSE}
+all_actions <- 
+  spells %>% 
+    dplyr::select(name, level, action:reaction) %>% 
+    gather(mechanic, condition, -level) %>% 
+    filter(condition == T) %>% 
+    group_by(level, mechanic) %>% 
+    count() %>% 
+    ggplot(aes(x = level, y = n, group = mechanic, color = mechanic)) +
+      geom_line() +
+      scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+      scale_color_manual(labels = c("Action", "Bonus Action", "Reaction"), 
+                         values = scales::hue_pal()(3)) +
+      xlab("Spell Level") + 
+      ylab("Number of Spells") + 
+      labs(title = "All Spells", color = "Spell Mechanic") + 
+      guides(color = "none") + 
+      plot_theme
+
+
+cleric_actions <- 
+  spells %>% 
+    filter(cleric == T) %>% 
+    dplyr::select(name, level, action:reaction) %>% 
+    gather(mechanic, condition, -level) %>% 
+    filter(condition == T) %>% 
+    group_by(level, mechanic) %>% 
+    count() %>% 
+    ggplot(aes(x = level, y = n, group = mechanic, color = mechanic)) +
+      geom_line() +
+      scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+      scale_color_manual(labels = c("Action", "Bonus Action", "Reaction"), 
+                           values = scales::hue_pal()(3)) +
+      coord_cartesian(ylim = c(0,50)) +
+      xlab("Spell Level") + 
+      ylab("Number of Spells") + 
+      labs(title = "Cleric Only", color = "Spell Mechanic") + 
+      guides(color = "none") + 
+      plot_theme
+  
+wizard_actions <- 
+  spells %>% 
+    filter(wizard == T) %>% 
+    dplyr::select(name, level, action:reaction) %>% 
+    gather(mechanic, condition, -level) %>% 
+    filter(condition == T) %>% 
+    group_by(level, mechanic) %>% 
+    count() %>% 
+    ggplot(aes(x = level, y = n, group = mechanic, color = mechanic)) +
+      geom_line() +
+      scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+      scale_color_manual(labels = c("Action", "Bonus Action", "Reaction"), 
+                           values = scales::hue_pal()(3)) +
+      coord_cartesian(ylim = c(0,50)) +
+      xlab("Spell Level") + 
+      ylab("Number of Spells") + 
+      labs(title = "Wizard Only", color = "Spell Mechanic") + 
+      guides(color = "none") + 
+      plot_theme
+
+actionsL <- 
+  spells %>% 
+    filter(wizard == T) %>% 
+    dplyr::select(name, level, action:reaction) %>% 
+    gather(mechanic, condition, -level) %>% 
+    filter(condition == T) %>% 
+    group_by(level, mechanic) %>% 
+    count() %>% 
+    ggplot(aes(x = level, y = n, group = mechanic, color = mechanic)) +
+      geom_line() +
+      scale_x_continuous(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+      scale_color_manual(labels = c("Action", "Bonus Action", "Reaction"), 
+                           values = scales::hue_pal()(3)) +
+      coord_cartesian(ylim = c(0,50)) +
+      xlab("Spell Level") + 
+      ylab("Number of Spells") + 
+      labs(title = "Wizard Only", color = "Spell Mechanic") + 
+      plot_theme
+
+l <- cowplot::get_legend(actionsL)
+  
+print(cowplot::plot_grid(all_actions, cleric_actions, wizard_actions, l, nrow = 1, rel_widths = c(1, 1, 1, 0.4)))
+```
+
+Here, I am counting the number of spells available at each spell level. 
+
+We can see that **Wizards**  have no access to bonus actions or reactions above level 3, restricting **Wizards** to use of actions when casting at higher levels. 
+
+In contrast, although **Clerics** have access to less total spells, they gain access to additional bonus actions up to level 7, which may offer more versatility on their turns as they level up throughout the campaign.
+
+### Spell Range: How far do their spells go?
+
+To further characterize the differences between **Wizards** and **Clerics**, I decided to explore the physical distance that their spells encompass.
+
+Here, I will extract the spell ranges and convert them to one unit (feet). Most spell ranges are reported in feet (some in miles), but for those that aren't, I will make some updates to the data:
+
+  * "Self" = 0.01 feet (not 0 to avoid creating an undefined value when log-scaling)
+
+  * "Touch" = 3 feet (assuming humanoid wingspan)
+  
+  * "Sight" = 2 miles (assuming sight on a clear day, by D&D rules)
+
+  * "Unlimited"/"Special" = 1000 miles, doubling the maximum range value of 500 miles
+  
+  * Values in miles will be converted to feet (1 mile = 5280 feet)
+
+```{r range, fig.width = 10, fig.height = 4}
+spells$range_adj <- 
+  ifelse(spells$range == "Self", "0.01 feet", 
+     ifelse(spells$range == "Touch", "3 feet", 
+            ifelse(spells$range == "Sight", "2 miles", 
+                   ifelse((spells$range == "Unlimited" | spells$range == "Special"), 
+                          "1000 miles", spells$range))))
+
+spells$range_ft <- 
+  ifelse(grepl("miles", spells$range_adj), 
+         as.numeric(str_split(spells$range_adj, " ", simplify = T)[,1]) * 5280, 
+         as.numeric(str_split(spells$range_adj, " ", simplify = T)[,1]))
+
+cleric_range <- 
+  spells %>%
+    filter(cleric == T) %>% 
+    ggplot(aes(x = range_ft)) + 
+      geom_histogram(fill =  "#8b0000", bins = 50) + 
+      scale_x_log10(n.breaks = 4, labels = c("NotShown", "1", "1,000", "1,000,000")) + 
+      coord_cartesian(ylim = c(0,40)) +
+      xlab("Spell Range (Feet, Log-Scale)") +  
+      ylab("Number of Spells") + 
+      labs(title = "Cleric") + 
+      plot_theme
+
+wizard_range <-
+  spells %>%
+    filter(wizard == T) %>% 
+    ggplot(aes(x = range_ft)) + 
+      geom_histogram(fill =  "#8b0000", bins = 50) + 
+      scale_x_log10(n.breaks = 4, labels = c("NotShown", "1", "1,000", "1,000,000")) + 
+      coord_cartesian(ylim = c(0,40)) +
+      xlab("Spell Range (Feet, Log-Scale)") +  
+      ylab("Number of Spells") + 
+      labs(title = "Wizard") + 
+      plot_theme
+
+print(cowplot::plot_grid(cleric_range, wizard_range, nrow = 1))
+```
+
+Here, we can see that **Wizards** have access to nearly twice the number of self-targeting spells that **Clerics** do as well as having more spells that target at closer and further distances.
+
+However, despite having less overall spells, **Clerics** do have one spell (Sending), which targets an "Unlimited" distance.
+
+### Spell Duration: How long do their spells last?
+
+Similar to the previous analysis, I am going to convert all available spell duration values to minutes. Spells are reported in several units across this data set, which will require additional conversions and assumptions.
+
+  * "Instantaneous" = 0.01 minutes (not 0 to avoid creating an undefined value when log-scaling)
+  
+  * "Up to ## minutes" = maximum value will be used 
+  
+  * "Special" = 1 day (only applies to [Creation](https://www.dndbeyond.com/spells/2055-creation) spell, for which we will assume its maximum possible duration)
+
+  * "Until dispelled"/"Until dispelled or triggered" = 30 days (assuming equal to the maximum duration value)
+  
+  * Values reported in hours (1 = 60 min), days (1 = 1440 min), and combat rounds (1 = 0.1 min) will be converted to minutes.
+
+```{r duration, fig.width = 10, fig.height = 4}
+spells$duration_adj <- 
+  ifelse(spells$duration == "Instantaneous", "0.01 minutes", 
+     ifelse(spells$duration == "Special", "1 day", 
+            ifelse(grepl("dispelled", spells$duration,), "30 days", 
+                   ifelse(grepl("up to", str_to_lower(spells$duration)), 
+                           str_split(spells$duration, "to ", simplify = T)[,2], spells$duration))))
+
+
+spells$duration_min <- 
+  ifelse(grepl("hour", spells$duration_adj), 
+         as.numeric(str_split(spells$duration_adj, " ", simplify = T)[,1]) * 60,
+         ifelse(grepl("day", spells$duration_adj), 
+                as.numeric(str_split(spells$duration_adj, " ", simplify = T)[,1]) * 1440,
+                ifelse(grepl("round", spells$duration_adj),  
+                       as.numeric(str_split(spells$duration_adj, " ", simplify = T)[,1]) * 0.1, 
+                       as.numeric(str_split(spells$duration_adj, " ", simplify = T)[,1]))))
+                                    
+cleric_duration <- 
+  spells %>%
+    filter(cleric == T) %>% 
+    ggplot(aes(x = duration_min)) + 
+      geom_histogram(fill =  "#8b0000", bins = 30) + 
+      scale_x_log10(n.breaks = 4, labels = c("NotShown", "1", "1,000", "NotShown")) + 
+      coord_cartesian(ylim = c(0,50)) +
+      xlab("Spell Duration (Minutes, Log-Scale)") +    
+      ylab("Number of Spells") + 
+      labs(title = "Cleric") + 
+      plot_theme
+
+wizard_duration <-
+  spells %>%
+    filter(wizard == T) %>% 
+    ggplot(aes(x = duration_min)) + 
+      geom_histogram(fill =  "#8b0000", bins = 30) + 
+      scale_x_log10(n.breaks = 4, labels = c("NotShown", "1", "1,000", "NotShown")) + 
+      coord_cartesian(ylim = c(0,50)) +
+      xlab("Spell Duration (Minutes, Log-Scale)") +  
+      ylab("Number of Spells") + 
+      labs(title = "Wizard") + 
+      plot_theme
+
+print(cowplot::plot_grid(cleric_duration, wizard_duration, nrow = 1))
+```
+
+
+From this analysis, we can see that **Wizards** again have access to a greater number of spells across the board.
+
+However, we can also see that **Clerics** do have access to spells that last just as long as the longest spells that **Wizards** can cast. 
+
+### Concentration: Do their spells require focus? 
+
+One final element I want to consider when thinking about my character build is the proportion of spells requiring Concentration.
+
+Spells that require Concentration have a chance of ending early if the spell-caster is attacked or loses focus while casting a different spell. 
+
+The need to maintain Concentration can put the spell-caster in a vulnerable position, so having more spells that don't require Concentration can be a way to get better "bang for your buck" on each cast spell, unless you are fine with your character mostly sitting on the outskirts during battle.
+
+**What amount and proportion of spells require Concentration for each class?**
+```{r concentration, fig.width = 10, fig.height = 4, message = FALSE, warning = FALSE}
+conc_num <-
+  spells %>% 
+    gather(class, can_cast, c(-name:-school, -casting_time:-description)) %>% 
+    filter(can_cast == TRUE) %>% 
+    mutate(class = factor(Hmisc::capitalize(class), 
+                          levels = c(rev(Hmisc::capitalize(colnames(spells)[4:11]))))) %>% 
+    mutate(level = factor(as.character(level), levels = c(as.character(0:9)))) %>% 
+    group_by(level, class, concentration) %>% 
+    count() %>% 
+    mutate(concentration = ifelse(concentration, "Y", "N")) %>% 
+    spread(concentration, n) %>% 
+    mutate(Y = ifelse(is.na(Y), 0, Y), N = ifelse(is.na(N), 0, N)) %>% 
+    mutate(total_spells = sum(Y, N)) %>% 
+    mutate(count_concentration = sum(Y)) %>% 
+    filter(class == "Wizard" | class == "Cleric") %>% 
+    ggplot(aes(x = level, y = class, fill = count_concentration)) + 
+      geom_tile() +
+      scale_fill_gradient2(low = "#f9f1dc", 
+                          high = "#8b0000") + 
+      scale_x_discrete(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+      xlab("Spell Level") + 
+      ylab("Class") + 
+      labs(title = "Number of Spells Requiring Concentration", fill = NULL) + 
+      plot_theme
+
+conc_prop <-
+  spells %>% 
+    gather(class, can_cast, c(-name:-school, -casting_time:-description)) %>% 
+    filter(can_cast == TRUE) %>% 
+    mutate(class = factor(Hmisc::capitalize(class), 
+                          levels = c(rev(Hmisc::capitalize(colnames(spells)[4:11]))))) %>% 
+    mutate(level = factor(as.character(level), levels = c(as.character(0:9)))) %>% 
+    group_by(level, class, concentration) %>% 
+    count() %>% 
+    mutate(concentration = ifelse(concentration, "Y", "N")) %>% 
+    spread(concentration, n) %>% 
+    mutate(Y = ifelse(is.na(Y), 0, Y), N = ifelse(is.na(N), 0, N)) %>% 
+    mutate(total_spells = sum(Y, N)) %>% 
+    mutate(prop_concentration = (Y/total_spells) * 100) %>% 
+    filter(class == "Wizard" | class == "Cleric") %>% 
+    ggplot(aes(x = level, y = class, fill = prop_concentration)) + 
+      geom_tile() +
+      scale_fill_gradient2(low = "#f9f1dc", 
+                          high = "#8b0000",
+                          n.breaks = 5, labels = c("0%", "20%", "40%", "60%", "80%")) + 
+      scale_x_discrete(breaks = 0:9, labels = c("Cantrip", as.character(1:9))) +
+      xlab("Spell Level") + 
+      ylab("Class") + 
+      labs(title = "Proportion of Spells Requiring Concentration", fill = NULL) + 
+      plot_theme
+
+print(cowplot::plot_grid(conc_num, conc_prop, nrow = 1))
+```
+
+From this data, we can see that **Wizards** have a greater amount and proportion of spells requiring Concentration at nearly all levels compared to **Clerics**. 
+
+**Clerics** require Concentration for a high proportion of Level 8 spells, but compared to **Wizards**, they are less likely to need to protect their Concentration throughout battle, allowing them to be a bit more of a dynamic character class in a fight.
+
+
+## Final Thoughts
+
+Working only from data on spells, we can see costs and benefits to playing both **Wizards** and **Clerics**. 
+
+**Wizards** have the largest repertoire of spells to work from, spanning huge physical distance and duration, but they have limited options for Bonus Actions at higher levels and are locked down by a greater proportion of spells requiring Concentration at most levels.  
+
+**Clerics** have the most unique spells to work from as a class. They consistently gain access to new Bonus Actions up to Level 7 and generally do not require as much Concentration for spell-casting, which can help them to make the most of their turns in combat. However, they have less spell options to choose from compared to **Wizards** and have absolutely no spell reactions, which could leave hit points on the table.
+
+From my initial analysis, I decided to be a **Wizard**! 
+```{r garrett, echo = FALSE}
+knitr::include_graphics("../Wizard.jpg")
+```
+
+(Say hi to Garrett, the angsty teenage **Wizard**, in his foolproof disguise!)
+
+
+**Limitations:**
+
+There are many limitations to this study. Chiefly, I cannot comment on any class features outside of spells. For example, **Warlock** is actually a very powerful spell-casting class, but many features that make them powerful are abilities that derive from their Patron. By looking only at spell data, we miss that angle.
+
+
+**Future Directions:**
+
+There are many fun directions to take this data analysis in the future. With the data I have now, I could:
+
+  * Explore which classes require the most expensive materials for their spells, which could serve as a limiting factor for their spell-casting in-game. 
+  
+  * Identify which classes would be the most vulnerable to a Silence spell, by evaluating which class has the highest proportion of verbally cast spells.
+  
+With additional data, I could:
+
+  * Explore the changes in available spells between the 2024 and 2014 versions of the D&D 5th edition game, highlighting which classes gained and lost power in the 2024 update.
+
+  * Identify which class is capable of the most spell-based damage using dummy character statistics and spell slots, simulated rolls, and extracted damage values from the descriptive spell text.
+  
